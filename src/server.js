@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
@@ -196,6 +197,8 @@ app.get('/api/me/overview', async (req, res) => {
 });
 
 async function initializeAuthentication() {
+  const schema = fs.readFileSync(path.join(__dirname, '../init.sql'), 'utf8');
+  await pool.query(schema);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_sessions (
       sid VARCHAR NOT NULL PRIMARY KEY,
