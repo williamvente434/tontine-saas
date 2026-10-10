@@ -73,6 +73,7 @@
             <nav class="module-nav" aria-label="Rubriques de gestion">
                 <button class="module-nav-item" type="button" data-view="home" aria-current="page">Accueil</button>
                 <button class="module-nav-item" type="button" data-view="members">Membres</button>
+                <button class="module-nav-item" type="button" data-view="tontines">Tontines</button>
                 <button class="module-nav-item" type="button" data-view="sessions">Réunions</button>
                 <button class="module-nav-item" type="button" data-view="contributions">Cotisations</button>
                 <button class="module-nav-item" type="button" data-view="loans">Prêts</button>
@@ -172,6 +173,71 @@
                 <ul id="members-list" class="data-list" aria-live="polite">
                     <li class="empty-state">Chargement des membres...</li>
                 </ul>
+            </section>
+
+            <section class="card form-section" aria-labelledby="tontine-heading" data-section-view="tontines" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="tontine-heading">Créer une tontine</h2>
+                        <p>Définissez le nom, la contribution et le rythme des cotisations.</p>
+                    </div>
+                </div>
+                <form id="tontine-form" class="form-grid">
+                    <div class="form-field full-width">
+                        <label for="tontine-name">Nom de la tontine</label>
+                        <input id="tontine-name" type="text" maxlength="100" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="tontine-amount">Cotisation prévue en FCFA</label>
+                        <input id="tontine-amount" type="number" min="1" step="1" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="tontine-frequency">Fréquence</label>
+                        <select id="tontine-frequency" required>
+                            <option value="weekly">Chaque semaine</option>
+                            <option value="monthly" selected>Chaque mois</option>
+                            <option value="quarterly">Chaque trimestre</option>
+                            <option value="yearly">Chaque année</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Créer la tontine</button>
+                    </div>
+                </form>
+                <p id="tontine-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card form-section" aria-labelledby="tontine-member-heading" data-section-view="tontines" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="tontine-member-heading">Ajouter un membre</h2>
+                        <p>Rattachez un membre existant à une tontine.</p>
+                    </div>
+                </div>
+                <form id="tontine-member-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="tontine-member-group">Tontine</label>
+                        <select id="tontine-member-group" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="tontine-member-user">Membre</label>
+                        <select id="tontine-member-user" required></select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Ajouter à la tontine</button>
+                    </div>
+                </form>
+                <p id="tontine-member-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card data-section" aria-labelledby="tontine-list-heading" data-section-view="tontines" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="tontine-list-heading">Tontines enregistrées</h2>
+                        <p>Montant prévu, fréquence et nombre de membres.</p>
+                    </div>
+                </div>
+                <div id="tontines-list" class="data-list" aria-live="polite"></div>
             </section>
 
             <section class="card form-section" aria-labelledby="session-heading" data-section-view="sessions" hidden>

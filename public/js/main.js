@@ -56,6 +56,53 @@ document.getElementById('report-filter-form').addEventListener('submit', async e
 
 document.getElementById('report-export-button').addEventListener('click', exportReportCsv);
 
+document.getElementById('tontine-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = document.getElementById('tontine-message');
+
+    try {
+        await getJson('/api/tontines', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: document.getElementById('tontine-name').value.trim(),
+                amount: Number(document.getElementById('tontine-amount').value),
+                frequency: document.getElementById('tontine-frequency').value,
+            }),
+        });
+        form.reset();
+        document.getElementById('tontine-frequency').value = 'monthly';
+        message.textContent = 'Tontine créée.';
+        message.className = 'form-message success-message';
+        await loadTontines();
+    } catch (error) {
+        message.textContent = error.message;
+        message.className = 'form-message error-message';
+    }
+});
+
+document.getElementById('tontine-member-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = document.getElementById('tontine-member-message');
+    const tontineId = document.getElementById('tontine-member-group').value;
+    const memberId = document.getElementById('tontine-member-user').value;
+
+    try {
+        await getJson(`/api/tontines/${encodeURIComponent(tontineId)}/members`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: Number(memberId) }),
+        });
+        message.textContent = 'Membre ajouté à la tontine.';
+        message.className = 'form-message success-message';
+        await loadTontines();
+    } catch (error) {
+        message.textContent = error.message;
+        message.className = 'form-message error-message';
+    }
+});
+
 function setActiveModuleView(view) {
     document.querySelectorAll('[data-section-view]').forEach(section => {
         section.hidden = section.dataset.sectionView !== view;
@@ -244,6 +291,7 @@ async function showAuthenticatedView(user) {
 async function loadAdminDashboard() {
     await Promise.all([
         loadMembers(),
+        loadTontineMembers(),
         loadTontines(),
         loadSessions(),
         loadMembersForContribution(),
@@ -277,6 +325,16 @@ async function loadMemberOverview() {
             `${notification.title} · ${notification.message}`);
     } catch (error) {
         console.error('Erreur de chargement de l’espace membre :', error);
+    }
+}
+
+async function loadTontineMembers() {
+    const select = document.getElementById('tontine-member-user');
+    try {
+        const members = await getJson('/api/members');
+        populateSelect(select, members.filter(member => member.role === 'member'), 'full_name', 'id');
+    } catch (error) {
+        console.error('Erreur de chargement des membres des tontines :', error);
     }
 }
 
@@ -443,11 +501,45 @@ function populateSelect(selectElement, values, labelSource, valueKey) {
 async function loadTontines() {
     try {
         const tontines = await getJson('/api/tontines');
-        const select = document.getElementById('session-tontine');
-        populateSelect(select, tontines, 'name', 'id');
+        populateSelect(document.getElementById('session-tontine'), tontines, 'name', 'id');
+        populateSelect(document.getElementById('tontine-member-group'), tontines, 'name', 'id');
+
+        const list = document.getElementById('tontines-list');
+        list.replaceChildren();
+        if (tontines.length === 0) {
+            const emptyState = document.createElement('p');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = 'Aucune tontine créée pour le moment.';
+            list.append(emptyState);
+            return;
+        }
+
+        tontines.forEach(tontine => {
+            const item = document.createElement('article');
+            item.className = 'data-card';
+            const name = document.createElement('h3');
+            name.textContent = tontine.name;
+            const amount = document.createElement('p');
+            amount.className = 'data-card-meta';
+            amount.textContent = `${formatAmount(tontine.amount)} · ${formatFrequency(tontine.frequency)}`;
+            const members = document.createElement('p');
+            members.className = 'data-card-description';
+            members.textContent = `${tontine.member_count} membre${tontine.member_count === 1 ? '' : 's'}`;
+            item.append(name, amount, members);
+            list.append(item);
+        });
     } catch (error) {
         console.error('Erreur de chargement des tontines :', error);
     }
+}
+
+function formatFrequency(frequency) {
+    return {
+        weekly: 'chaque semaine',
+        monthly: 'chaque mois',
+        quarterly: 'chaque trimestre',
+        yearly: 'chaque année',
+    }[frequency] || frequency;
 }
 
 function createStatusBadge(status) {

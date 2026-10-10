@@ -416,10 +416,14 @@ app.post('/api/members', async (req, res) => {
 // Création d'une tontine avec validation du nom et du montant.
 app.post('/api/tontines', async (req, res) => {
   const { name, amount, frequency } = req.body;
+  const normalizedName = typeof name === 'string' ? name.trim() : '';
+  const numericAmount = Number(amount);
+  const allowedFrequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
+  const normalizedFrequency = frequency || 'monthly';
 
-  if (!name || amount === undefined || amount === null || amount === '') {
+  if (!normalizedName || !Number.isFinite(numericAmount) || numericAmount <= 0 || !allowedFrequencies.includes(normalizedFrequency)) {
     return res.status(400).json({
-      error: 'Le nom et le montant sont requis.',
+      error: 'Indiquez un nom, un montant positif et une fréquence valide.',
     });
   }
 
@@ -430,7 +434,7 @@ app.post('/api/tontines', async (req, res) => {
         VALUES ($1, $2, $3)
         RETURNING *
       `,
-      [name, amount, frequency || 'monthly']
+      [normalizedName, numericAmount, normalizedFrequency]
     );
 
     res.status(201).json(result.rows[0]);
@@ -444,15 +448,52 @@ app.post('/api/tontines', async (req, res) => {
 app.get('/api/tontines', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT *
-      FROM tontines
-      ORDER BY id DESC
+      SELECT t.*, COUNT(tm.user_id)::int AS member_count
+      FROM tontines t
+      LEFT JOIN tontine_members tm ON tm.tontine_id = t.id
+      GROUP BY t.id
+      ORDER BY t.created_at DESC, t.id DESC
     `);
 
     res.json(result.rows);
   } catch (error) {
     console.error('Erreur SQL (GET /api/tontines) :', error.message);
     res.status(500).json({ error: 'Impossible de récupérer les tontines.' });
+  }
+});
+
+app.post('/api/tontines/:id/members', async (req, res) => {
+  const tontineId = Number(req.params.id);
+  const memberId = Number(req.body.member_id);
+
+  if (!Number.isInteger(tontineId) || tontineId <= 0 || !Number.isInteger(memberId) || memberId <= 0) {
+    return res.status(400).json({ error: 'La tontine et le membre sélectionnés sont invalides.' });
+  }
+
+  try {
+    const entities = await pool.query(`
+      SELECT EXISTS (SELECT 1 FROM tontines WHERE id = $1) AS tontine_exists,
+             EXISTS (SELECT 1 FROM users WHERE id = $2 AND role = 'member') AS member_exists
+    `, [tontineId, memberId]);
+    if (!entities.rows[0].tontine_exists || !entities.rows[0].member_exists) {
+      return res.status(404).json({ error: 'Tontine ou membre introuvable.' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO tontine_members (tontine_id, user_id)
+      VALUES ($1, $2)
+      ON CONFLICT (tontine_id, user_id) DO NOTHING
+      RETURNING id, tontine_id, user_id, joined_at
+    `, [tontineId, memberId]);
+
+    if (result.rows.length === 0) {
+      return res.status(409).json({ error: 'Ce membre appartient déjà à cette tontine.' });
+    }
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erreur SQL (POST /api/tontines/:id/members) :', error.message);
+    res.status(500).json({ error: 'Impossible d’ajouter le membre à cette tontine.' });
   }
 });
 
