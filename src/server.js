@@ -698,59 +698,85 @@ app.post('/api/loans', async (req, res) => {
 });
 
 app.post('/api/loans/:id/repayments', async (req, res) => {
-  const { id } = req.params;
-  const { amount } = req.body;
+  const loanId = Number(req.params.id);
+  const amount = Number(req.body.amount);
 
-  if (amount === undefined || amount <= 0) {
+  if (!Number.isInteger(loanId) || loanId <= 0 || !Number.isFinite(amount) || amount <= 0) {
     return res.status(400).json({ error: 'Un montant positif est requis.' });
   }
 
+  let client;
   try {
-    const loanResult = await pool.query('SELECT * FROM loans WHERE id = $1', [id]);
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const loanResult = await client.query('SELECT * FROM loans WHERE id = $1 FOR UPDATE', [loanId]);
     if (loanResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Prêt non trouvé.' });
     }
 
     const loan = loanResult.rows[0];
-    const repaymentResult = await pool.query(`
-      INSERT INTO loan_repayments (loan_id, amount)
-      VALUES ($1, $2)
-      RETURNING *
-    `, [id, amount]);
-
-    const paidAmountResult = await pool.query(`
+    const paidAmountResult = await client.query(`
       SELECT COALESCE(SUM(amount), 0) AS paid_amount
       FROM loan_repayments
       WHERE loan_id = $1
-    `, [id]);
+    `, [loanId]);
     const paidAmount = Number(paidAmountResult.rows[0].paid_amount);
-    const remaining = Number(loan.total_amount) - paidAmount;
-    const status = remaining <= 0 ? 'paid' : 'active';
+    const remaining = Number((Number(loan.total_amount) - paidAmount).toFixed(2));
+    const repaymentAmount = Number(amount.toFixed(2));
 
-    await pool.query(`
+    if (repaymentAmount <= 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Le remboursement doit être d’au moins 0,01 FCFA.' });
+    }
+
+    if (remaining <= 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Ce prêt est déjà entièrement remboursé.' });
+    }
+    if (repaymentAmount > remaining) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: `Le remboursement dépasse le solde restant de ${remaining.toFixed(2)} FCFA.`,
+      });
+    }
+
+    const repaymentResult = await client.query(`
+      INSERT INTO loan_repayments (loan_id, amount)
+      VALUES ($1, $2)
+      RETURNING *
+    `, [loanId, repaymentAmount]);
+    const newRemaining = Number((remaining - repaymentAmount).toFixed(2));
+    const status = newRemaining === 0 ? 'paid' : 'active';
+
+    await client.query(`
       UPDATE loans
       SET status = $1, updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
-    `, [status, id]);
+    `, [status, loanId]);
+    await client.query('COMMIT');
 
     res.status(201).json({
       ...repaymentResult.rows[0],
-      remaining: Number(remaining.toFixed(2)),
+      remaining: newRemaining,
       status
     });
   } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('Erreur SQL (POST /api/loans/:id/repayments) :', error.message);
     res.status(500).json({ error: 'Impossible d’enregistrer le remboursement.' });
+  } finally {
+    client?.release();
   }
 });
 
 // -------------------------------------------------------------------------
 // 7. Paiements et notifications
 // -------------------------------------------------------------------------
-async function createNotification({ user_id, title, message, type = 'info' }) {
+async function createNotification({ user_id, title, message, type = 'info' }, database = pool) {
   if (!user_id || !title || !message) return null;
 
-  const result = await pool.query(`
+  const result = await database.query(`
     INSERT INTO notifications (user_id, title, message, type)
     VALUES ($1, $2, $3, $4)
     RETURNING *
@@ -778,31 +804,50 @@ app.get('/api/payments', async (req, res) => {
 
 app.post('/api/payments', async (req, res) => {
   const { user_id, session_id, amount, method, reference, status } = req.body;
+  const memberId = Number(user_id);
+  const numericAmount = Number(amount);
+  const paymentMethod = method || 'mobile_money';
+  const paymentStatus = status || 'pending';
+  const allowedMethods = ['mobile_money', 'bank_transfer', 'cash'];
+  const allowedStatuses = ['pending', 'paid', 'failed'];
 
-  if (!user_id || amount === undefined || amount === null || amount <= 0) {
+  if (!Number.isInteger(memberId) || memberId <= 0 || !Number.isFinite(numericAmount) || numericAmount <= 0 ||
+      !allowedMethods.includes(paymentMethod) || !allowedStatuses.includes(paymentStatus)) {
     return res.status(400).json({
-      error: 'Le membre et un montant positif sont requis.',
+      error: 'Vérifiez le membre, le montant, la méthode et le statut du paiement.',
     });
   }
 
+  const sessionId = session_id ? Number(session_id) : null;
+  if (sessionId !== null && (!Number.isInteger(sessionId) || sessionId <= 0)) {
+    return res.status(400).json({ error: 'La session sélectionnée est invalide.' });
+  }
+
+  let client;
   try {
-    const result = await pool.query(`
-      INSERT INTO payments (user_id, session_id, amount, method, reference, status)
-      VALUES ($1, $2, $3, $4, $5, $6)
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const result = await client.query(`
+      INSERT INTO payments (user_id, session_id, amount, method, reference, status, paid_at)
+      VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $6 = 'paid' THEN CURRENT_TIMESTAMP ELSE NULL END)
       RETURNING *
-    `, [user_id, session_id || null, amount, method || 'mobile_money', reference || '', status || 'pending']);
+    `, [memberId, sessionId, numericAmount, paymentMethod, reference || '', paymentStatus]);
 
     await createNotification({
-      user_id,
+      user_id: memberId,
       title: 'Paiement enregistré',
-      message: `Un paiement de ${Number(amount).toFixed(2)} FCFA a été enregistré pour la session ${session_id || 'générale'}.`,
+      message: `Un paiement de ${numericAmount.toFixed(2)} FCFA a été enregistré pour la session ${sessionId || 'générale'}.`,
       type: 'payment'
-    });
+    }, client);
+    await client.query('COMMIT');
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('Erreur SQL (POST /api/payments) :', error.message);
     res.status(500).json({ error: 'Impossible d’enregistrer le paiement.' });
+  } finally {
+    client?.release();
   }
 });
 

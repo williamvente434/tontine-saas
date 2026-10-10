@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
     try {
         const { user } = await getJson('/api/auth/me');
         await showAuthenticatedView(user);

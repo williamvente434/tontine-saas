@@ -925,6 +925,38 @@ textarea {
     text-align: center;
 }
 
+.site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 30px;
+    padding: 20px 2px 0;
+    border-top: 1px solid var(--border);
+}
+
+.footer-brand img {
+    display: block;
+    width: 122px;
+    height: auto;
+}
+
+.footer-brand p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.footer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px 18px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: right;
+}
+
 @media (max-width: 900px) {
     .hero-card,
     .stats-card,
@@ -959,6 +991,18 @@ textarea {
     .app-header {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .site-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 24px;
+    }
+
+    .footer-meta {
+        justify-content: flex-start;
+        text-align: left;
     }
 
     .module-nav {
