@@ -149,6 +149,36 @@ button {
     color: #d7eee5;
 }
 
+.auth-image {
+    position: relative;
+    margin: 22px 0 0;
+    overflow: hidden;
+    aspect-ratio: 16 / 7;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.auth-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 44%;
+}
+
+.auth-image figcaption {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 6px 9px;
+    color: #fff;
+    background: rgba(17, 47, 35, 0.82);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
 .auth-form {
     display: grid;
     gap: 16px;
@@ -213,6 +243,45 @@ button {
     gap: 22px;
 }
 
+.module-nav {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    overflow-x: auto;
+    background: #e8efeb;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    scrollbar-width: thin;
+}
+
+.module-nav-item {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 9px 15px;
+    color: #43534b;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.module-nav-item:hover {
+    color: var(--green-900);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.module-nav-item[aria-current="page"] {
+    color: #fff;
+    background: var(--green-700);
+    box-shadow: 0 3px 9px rgba(19, 123, 77, 0.18);
+}
+
+.module-nav-item:focus-visible {
+    outline: 3px solid rgba(34, 160, 107, 0.35);
+    outline-offset: 2px;
+}
+
 .card {
     background: var(--surface);
     border: 1px solid rgba(220, 228, 236, 0.9);
@@ -225,6 +294,36 @@ button {
     padding: 30px;
     overflow: hidden;
     position: relative;
+}
+
+.hero-image {
+    position: relative;
+    z-index: 1;
+    margin: 24px 0 0;
+    overflow: hidden;
+    aspect-ratio: 16 / 7;
+    background: #dce8e1;
+    border-radius: 10px;
+}
+
+.hero-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 44%;
+}
+
+.hero-image figcaption {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 7px 10px;
+    color: #fff;
+    background: rgba(17, 47, 35, 0.82);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
 }
 
 .hero-card::after {
@@ -540,6 +639,21 @@ textarea {
     .app-header {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .module-nav {
+        margin-right: -2px;
+        padding: 4px;
+    }
+
+    .module-nav-item {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .hero-image {
+        aspect-ratio: 4 / 3;
     }
 
     .account-actions {

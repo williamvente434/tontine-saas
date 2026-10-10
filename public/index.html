@@ -32,6 +32,10 @@
                 <p class="eyebrow">Votre communauté, en confiance</p>
                 <h2 id="auth-heading">Connexion à votre tontine</h2>
                 <p>Accédez à votre espace avec le numéro de téléphone associé à votre compte.</p>
+                <figure class="auth-image">
+                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des membres réunis pour organiser leur tontine" loading="eager">
+                    <figcaption>Une communauté qui avance ensemble.</figcaption>
+                </figure>
             </div>
             <form id="login-form" class="auth-form">
                 <div class="form-field">
@@ -74,22 +78,36 @@
         </section>
 
         <div id="admin-dashboard" class="dashboard-grid" hidden>
-            <section class="card hero-card">
+            <nav class="module-nav" aria-label="Rubriques de gestion">
+                <button class="module-nav-item" type="button" data-view="home" aria-current="page">Accueil</button>
+                <button class="module-nav-item" type="button" data-view="members">Membres</button>
+                <button class="module-nav-item" type="button" data-view="sessions">Réunions</button>
+                <button class="module-nav-item" type="button" data-view="contributions">Cotisations</button>
+                <button class="module-nav-item" type="button" data-view="loans">Prêts</button>
+                <button class="module-nav-item" type="button" data-view="payments">Paiements</button>
+                <button class="module-nav-item" type="button" data-view="notifications">Notifications</button>
+            </nav>
+
+            <section class="card hero-card" data-section-view="home">
                 <p class="eyebrow">Le cœur de votre communauté</p>
-                <h2>Suivez les réunions, les cotisations et les membres de votre tontine.</h2>
-                <p>Centralisez les données de chaque session, validez les contributions et maintenez une visibilité claire sur votre communauté.</p>
+                <h2>Les projets avancent mieux quand la communauté avance ensemble.</h2>
+                <p>Retrouvez vos réunions, suivez les cotisations et accompagnez chaque membre au même endroit.</p>
                 <div class="hero-action">
                     <button id="btn-test" class="secondary-button" type="button">Tester l’API PostgreSQL</button>
                 </div>
+                <figure class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des membres réunis autour d’une table pour échanger" loading="eager">
+                    <figcaption>Ensemble, chaque contribution compte.</figcaption>
+                </figure>
             </section>
 
-            <aside class="card stats-card" aria-label="Informations principales">
+            <aside class="card stats-card" aria-label="Informations principales" data-section-view="home">
                 <h3>État du projet</h3>
                 <div class="stat-value">SaaS</div>
                 <p class="stat-note">Node.js, Express et PostgreSQL</p>
             </aside>
 
-            <section class="card form-section" aria-labelledby="member-heading">
+            <section class="card form-section" aria-labelledby="member-heading" data-section-view="members" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="member-heading">Nouveau membre</h2>
@@ -123,7 +141,7 @@
                 <p id="form-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="card data-section" aria-labelledby="members-heading">
+            <section class="card data-section" aria-labelledby="members-heading" data-section-view="members" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="members-heading">Liste des membres</h2>
@@ -135,7 +153,7 @@
                 </ul>
             </section>
 
-            <section class="card form-section" aria-labelledby="session-heading">
+            <section class="card form-section" aria-labelledby="session-heading" data-section-view="sessions" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="session-heading">Sessions de réunion</h2>
@@ -175,7 +193,7 @@
                 <p id="session-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="card form-section" aria-labelledby="contribution-heading">
+            <section class="card form-section" aria-labelledby="contribution-heading" data-section-view="contributions" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="contribution-heading">Cotisations</h2>
@@ -211,7 +229,7 @@
                 <p id="contribution-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="card data-section" aria-labelledby="contributions-heading">
+            <section class="card data-section" aria-labelledby="contributions-heading" data-section-view="contributions" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="contributions-heading">Historique des cotisations</h2>
@@ -221,7 +239,7 @@
                 <div id="contributions-list" class="data-list" aria-live="polite"></div>
             </section>
 
-            <section class="card form-section" aria-labelledby="loan-heading">
+            <section class="card form-section" aria-labelledby="loan-heading" data-section-view="loans" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="loan-heading">Demander un prêt</h2>
@@ -252,7 +270,7 @@
                 <p id="loan-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="card data-section" aria-labelledby="loans-heading">
+            <section class="card data-section" aria-labelledby="loans-heading" data-section-view="loans" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="loans-heading">Prêts et remboursements</h2>
@@ -262,7 +280,7 @@
                 <div id="loans-list" class="data-list" aria-live="polite"></div>
             </section>
 
-            <section class="card form-section" aria-labelledby="payment-heading">
+            <section class="card form-section" aria-labelledby="payment-heading" data-section-view="payments" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="payment-heading">Paiement mobile</h2>
@@ -301,7 +319,7 @@
                 <p id="payment-message" class="form-message" aria-live="polite"></p>
             </section>
 
-            <section class="card data-section" aria-labelledby="payments-heading">
+            <section class="card data-section" aria-labelledby="payments-heading" data-section-view="payments" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="payments-heading">Historique des paiements</h2>
@@ -311,7 +329,7 @@
                 <div id="payments-list" class="data-list" aria-live="polite"></div>
             </section>
 
-            <section class="card data-section" aria-labelledby="notifications-heading">
+            <section class="card data-section" aria-labelledby="notifications-heading" data-section-view="notifications" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="notifications-heading">Notifications</h2>
@@ -321,7 +339,7 @@
                 <div id="notifications-list" class="data-list" aria-live="polite"></div>
             </section>
 
-            <section class="card data-section" aria-labelledby="sessions-heading">
+            <section class="card data-section" aria-labelledby="sessions-heading" data-section-view="sessions" hidden>
                 <div class="section-heading">
                     <div>
                         <h2 id="sessions-heading">Sessions enregistrées</h2>

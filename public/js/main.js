@@ -44,6 +44,25 @@ document.getElementById('logout-button').addEventListener('click', async () => {
     showLoginView();
 });
 
+document.querySelector('.module-nav').addEventListener('click', event => {
+    const button = event.target.closest('[data-view]');
+    if (button) setActiveModuleView(button.dataset.view);
+});
+
+function setActiveModuleView(view) {
+    document.querySelectorAll('[data-section-view]').forEach(section => {
+        section.hidden = section.dataset.sectionView !== view;
+    });
+
+    document.querySelectorAll('.module-nav-item').forEach(button => {
+        if (button.dataset.view === view) {
+            button.setAttribute('aria-current', 'page');
+        } else {
+            button.removeAttribute('aria-current');
+        }
+    });
+}
+
 function showLoginView() {
     document.getElementById('auth-screen').hidden = false;
     document.getElementById('member-space').hidden = true;
@@ -59,6 +78,7 @@ async function showAuthenticatedView(user) {
     if (user.role === 'admin') {
         document.getElementById('member-space').hidden = true;
         document.getElementById('admin-dashboard').hidden = false;
+        setActiveModuleView('home');
         await loadAdminDashboard();
         return;
     }
