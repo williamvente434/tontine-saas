@@ -316,6 +316,56 @@ app.get('/api/admin/overview', async (req, res) => {
   }
 });
 
+app.get('/api/admin/reports', async (req, res) => {
+  const { start_date: startDate, end_date: endDate, type = 'all' } = req.query;
+  const allowedTypes = ['all', 'contribution', 'payment', 'loan'];
+  const isValidDate = value => {
+    if (!value) return true;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+  };
+
+  if (!allowedTypes.includes(type) || !isValidDate(startDate) || !isValidDate(endDate)) {
+    return res.status(400).json({ error: 'Choisissez un type et des dates valides.' });
+  }
+  if (startDate && endDate && startDate > endDate) {
+    return res.status(400).json({ error: 'La date de début doit précéder la date de fin.' });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT * FROM (
+        SELECT 'contribution' AS type, c.created_at, u.full_name AS member_name,
+               c.amount, c.status, s.title AS details
+        FROM contributions c
+        JOIN users u ON u.id = c.user_id
+        JOIN sessions s ON s.id = c.session_id
+        UNION ALL
+        SELECT 'payment' AS type, p.created_at, u.full_name AS member_name,
+               p.amount, p.status, COALESCE(s.title, p.method) AS details
+        FROM payments p
+        JOIN users u ON u.id = p.user_id
+        LEFT JOIN sessions s ON s.id = p.session_id
+        UNION ALL
+        SELECT 'loan' AS type, l.created_at, u.full_name AS member_name,
+               l.amount, l.status, 'Échéance ' || l.due_date::text AS details
+        FROM loans l
+        JOIN users u ON u.id = l.user_id
+      ) report_rows
+      WHERE ($1 = 'all' OR type = $1)
+        AND ($2::date IS NULL OR created_at >= $2::date)
+        AND ($3::date IS NULL OR created_at < $3::date + INTERVAL '1 day')
+      ORDER BY created_at DESC
+    `, [type, startDate || null, endDate || null]);
+
+    res.json({ rows: result.rows });
+  } catch (error) {
+    console.error('Erreur SQL (GET /api/admin/reports) :', error.message);
+    res.status(500).json({ error: 'Impossible de générer le rapport.' });
+  }
+});
+
 // Création d'un membre après validation des champs obligatoires.
 app.post('/api/members', async (req, res) => {
   const { full_name, phone_number, password, role } = req.body;

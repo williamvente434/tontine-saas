@@ -49,6 +49,13 @@ document.querySelector('.module-nav').addEventListener('click', event => {
     if (button) setActiveModuleView(button.dataset.view);
 });
 
+document.getElementById('report-filter-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    await loadReportRows();
+});
+
+document.getElementById('report-export-button').addEventListener('click', exportReportCsv);
+
 function setActiveModuleView(view) {
     document.querySelectorAll('[data-section-view]').forEach(section => {
         section.hidden = section.dataset.sectionView !== view;
@@ -63,6 +70,95 @@ function setActiveModuleView(view) {
     });
 
     if (view === 'home') loadAdminOverview();
+    if (view === 'reports') loadReportRows();
+}
+
+let currentReportRows = [];
+
+async function loadReportRows() {
+    const params = new URLSearchParams({
+        start_date: document.getElementById('report-start-date').value,
+        end_date: document.getElementById('report-end-date').value,
+        type: document.getElementById('report-type').value,
+    });
+    const message = document.getElementById('report-message');
+    const exportButton = document.getElementById('report-export-button');
+    message.textContent = 'Chargement du rapport…';
+    exportButton.disabled = true;
+
+    try {
+        const report = await getJson(`/api/admin/reports?${params.toString()}`);
+        currentReportRows = report.rows;
+        renderReportRows(currentReportRows);
+        exportButton.disabled = currentReportRows.length === 0;
+        message.textContent = `${currentReportRows.length} opération${currentReportRows.length > 1 ? 's' : ''}`;
+    } catch (error) {
+        currentReportRows = [];
+        renderReportRows([]);
+        message.textContent = error.message;
+        exportButton.disabled = true;
+    }
+}
+
+function renderReportRows(rows) {
+    const body = document.getElementById('report-rows');
+    body.replaceChildren();
+
+    if (rows.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 6;
+        cell.className = 'empty-state';
+        cell.textContent = 'Aucune opération sur cette période.';
+        row.append(cell);
+        body.append(row);
+        return;
+    }
+
+    const labels = { contribution: 'Cotisation', payment: 'Paiement', loan: 'Prêt' };
+    rows.forEach(record => {
+        const row = document.createElement('tr');
+        const values = [
+            new Date(record.created_at).toLocaleDateString('fr-CM'),
+            labels[record.type] || record.type,
+            record.member_name,
+            record.details,
+            record.status,
+            formatAmount(record.amount),
+        ];
+        values.forEach(value => {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.append(cell);
+        });
+        body.append(row);
+    });
+}
+
+function exportReportCsv() {
+    if (currentReportRows.length === 0) return;
+
+    const labels = { contribution: 'Cotisation', payment: 'Paiement', loan: 'Prêt' };
+    const columns = ['Date', 'Type', 'Membre', 'Détail', 'Statut', 'Montant (FCFA)'];
+    const csvCell = value => {
+        const safeValue = /^[\s]*[=+@-]/.test(String(value)) ? `'${value}` : String(value);
+        return `"${safeValue.replaceAll('"', '""')}"`;
+    };
+    const lines = [columns, ...currentReportRows.map(record => [
+        new Date(record.created_at).toLocaleDateString('fr-CM'),
+        labels[record.type] || record.type,
+        record.member_name,
+        record.details,
+        record.status,
+        record.amount,
+    ])].map(row => row.map(csvCell).join(';'));
+    const blob = new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'rapport-tontine.csv';
+    link.click();
+    URL.revokeObjectURL(url);
 }
 
 async function loadAdminOverview() {

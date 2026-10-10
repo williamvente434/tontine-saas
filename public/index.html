@@ -78,6 +78,7 @@
                 <button class="module-nav-item" type="button" data-view="loans">Prêts</button>
                 <button class="module-nav-item" type="button" data-view="payments">Paiements</button>
                 <button class="module-nav-item" type="button" data-view="notifications">Notifications</button>
+                <button class="module-nav-item" type="button" data-view="reports">Rapports</button>
             </nav>
 
             <section class="card hero-card" data-section-view="home">
@@ -357,6 +358,54 @@
                     </div>
                 </div>
                 <div id="notifications-list" class="data-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card report-section" aria-labelledby="reports-heading" data-section-view="reports" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="reports-heading">Rapports financiers</h2>
+                        <p>Filtrez les opérations par période et exportez-les en CSV.</p>
+                    </div>
+                </div>
+                <form id="report-filter-form" class="report-filters">
+                    <div class="form-field">
+                        <label for="report-start-date">Du</label>
+                        <input id="report-start-date" type="date">
+                    </div>
+                    <div class="form-field">
+                        <label for="report-end-date">Au</label>
+                        <input id="report-end-date" type="date">
+                    </div>
+                    <div class="form-field">
+                        <label for="report-type">Opérations</label>
+                        <select id="report-type">
+                            <option value="all">Toutes</option>
+                            <option value="contribution">Cotisations</option>
+                            <option value="payment">Paiements</option>
+                            <option value="loan">Prêts</option>
+                        </select>
+                    </div>
+                    <div class="report-actions">
+                        <button class="primary-button" type="submit">Afficher</button>
+                        <button id="report-export-button" class="secondary-button" type="button" disabled>Exporter en CSV</button>
+                    </div>
+                </form>
+                <p id="report-message" class="form-message" aria-live="polite"></p>
+                <div class="report-table-wrap">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Membre</th>
+                                <th scope="col">Détail</th>
+                                <th scope="col">Statut</th>
+                                <th scope="col">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-rows"></tbody>
+                    </table>
+                </div>
             </section>
 
             <section class="card data-section" aria-labelledby="sessions-heading" data-section-view="sessions" hidden>
