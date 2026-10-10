@@ -315,6 +315,10 @@ async function loadMemberOverview() {
     try {
         const overview = await getJson('/api/me/overview');
         document.getElementById('member-space-heading').textContent = `Bonjour ${overview.user.full_name}`;
+        renderPersonalList('my-tontines', overview.tontines, tontine =>
+            `${formatAmount(tontine.amount)} · ${formatFrequency(tontine.frequency)} · depuis le ${new Date(tontine.joined_at).toLocaleDateString('fr-CM')}`);
+        renderPersonalList('my-upcoming-sessions', overview.upcomingSessions, session =>
+            `${session.tontine_name} · ${new Date(session.date).toLocaleString('fr-CM')} · ${session.status}`);
         renderPersonalList('my-contributions', overview.contributions, contribution =>
             `${formatAmount(contribution.amount)} · ${contribution.status}`);
         renderPersonalList('my-loans', overview.loans, loan =>

@@ -176,7 +176,25 @@ app.use('/api', requireAuthentication);
 
 app.get('/api/me/overview', async (req, res) => {
   try {
-    const [contributions, loans, payments, notifications] = await Promise.all([
+    const [tontines, upcomingSessions, contributions, loans, payments, notifications] = await Promise.all([
+      pool.query(`
+        SELECT t.id, t.name, t.amount, t.frequency, tm.joined_at
+        FROM tontine_members tm
+        JOIN tontines t ON t.id = tm.tontine_id
+        WHERE tm.user_id = $1
+        ORDER BY t.name
+      `, [req.user.id]),
+      pool.query(`
+        SELECT s.id, s.title, s.date, s.agenda, s.status, t.name AS tontine_name
+        FROM sessions s
+        JOIN tontines t ON t.id = s.tontine_id
+        JOIN tontine_members tm ON tm.tontine_id = t.id
+        WHERE tm.user_id = $1
+          AND s.date >= CURRENT_TIMESTAMP
+          AND s.status IN ('scheduled', 'ongoing')
+        ORDER BY s.date
+        LIMIT 10
+      `, [req.user.id]),
       pool.query('SELECT id, amount, status, paid_at, created_at FROM contributions WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]),
       pool.query('SELECT id, amount, interest_rate, total_amount, due_date, status, created_at FROM loans WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]),
       pool.query('SELECT p.id, p.amount, p.method, p.reference, p.status, p.created_at, s.title AS session_title FROM payments p LEFT JOIN sessions s ON s.id = p.session_id WHERE p.user_id = $1 ORDER BY p.created_at DESC', [req.user.id]),
@@ -185,6 +203,8 @@ app.get('/api/me/overview', async (req, res) => {
 
     res.json({
       user: req.user,
+      tontines: tontines.rows,
+      upcomingSessions: upcomingSessions.rows,
       contributions: contributions.rows,
       loans: loans.rows,
       payments: payments.rows,
