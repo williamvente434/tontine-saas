@@ -58,51 +58,12 @@ button {
 .brand {
     display: flex;
     align-items: center;
-    gap: 14px;
 }
 
-.brand-mark {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    color: white;
-    background: var(--green-700);
-    border-radius: 15px;
-    box-shadow: 0 10px 24px rgba(19, 123, 77, 0.22);
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
-.brand h1 {
-    margin: 0;
-    color: var(--green-900);
-    font-size: clamp(1.45rem, 3vw, 2rem);
-}
-
-.brand p {
-    margin: 2px 0 0;
-    color: var(--muted);
-}
-
-.connection-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    color: var(--green-900);
-    background: var(--green-100);
-    border: 1px solid #bfe8d3;
-    border-radius: 999px;
-    font-weight: 700;
-}
-
-.connection-dot {
-    width: 9px;
-    height: 9px;
-    background: var(--green-500);
-    border-radius: 50%;
-    box-shadow: 0 0 0 4px rgba(34, 160, 107, 0.14);
+.brand-logo {
+    display: block;
+    width: min(244px, 58vw);
+    height: auto;
 }
 
 [hidden] {
@@ -364,6 +325,17 @@ button {
     position: relative;
     z-index: 1;
     margin-top: 22px;
+}
+
+.connection-result:empty {
+    display: none;
+}
+
+.connection-result {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 700;
 }
 
 .secondary-button,

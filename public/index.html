@@ -11,15 +11,7 @@
     <main class="app-shell">
         <header class="app-header">
             <div class="brand">
-                <div class="brand-mark" aria-hidden="true">T</div>
-                <div>
-                    <h1>Tontine SaaS</h1>
-                    <p>Gestion sociale et financière au Cameroun</p>
-                </div>
-            </div>
-            <div id="connection-status" class="connection-status" role="status">
-                <span class="connection-dot" aria-hidden="true"></span>
-                <span id="status">Vérification de la connexion...</span>
+                <img class="brand-logo" src="images/tontine-logo.svg" alt="Tontine, finance solidaire" width="244" height="64">
             </div>
             <div id="account-actions" class="account-actions" hidden>
                 <span id="account-name"></span>
@@ -94,6 +86,7 @@
                 <p>Retrouvez vos réunions, suivez les cotisations et accompagnez chaque membre au même endroit.</p>
                 <div class="hero-action">
                     <button id="btn-test" class="secondary-button" type="button">Tester l’API PostgreSQL</button>
+                    <p id="status" class="connection-result" role="status" aria-live="polite"></p>
                 </div>
                 <figure class="hero-image">
                     <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des membres réunis autour d’une table pour échanger" loading="eager">
