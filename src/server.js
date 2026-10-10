@@ -629,23 +629,35 @@ app.get('/api/contributions', async (req, res) => {
 // Enregistrement d'une cotisation pour un membre et une session.
 app.post('/api/contributions', async (req, res) => {
   const { session_id, user_id, amount, status } = req.body;
+  const sessionId = Number(session_id);
+  const memberId = Number(user_id);
+  const numericAmount = Number(amount);
+  const contributionStatus = status || 'pending';
+  const allowedStatuses = ['pending', 'paid', 'overdue', 'failed'];
 
-  if (!session_id || !user_id || amount === undefined || amount === null || amount <= 0) {
+  if (!Number.isInteger(sessionId) || sessionId <= 0 || !Number.isInteger(memberId) || memberId <= 0 ||
+      !Number.isFinite(numericAmount) || numericAmount <= 0 || !allowedStatuses.includes(contributionStatus)) {
     return res.status(400).json({
-      error: 'La session, le membre et un montant positif sont requis.',
+      error: 'Vérifiez la session, le membre, le montant et le statut de la cotisation.',
     });
   }
 
   try {
     const result = await pool.query(`
-      INSERT INTO contributions (session_id, user_id, amount, status)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO contributions (session_id, user_id, amount, status, paid_at)
+      VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'paid' THEN CURRENT_TIMESTAMP ELSE NULL END)
       RETURNING *
-    `, [session_id, user_id, amount, status || 'pending']);
+    `, [sessionId, memberId, Number(numericAmount.toFixed(2)), contributionStatus]);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Erreur SQL (POST /api/contributions) :', error.message);
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Une cotisation existe déjà pour ce membre et cette session.' });
+    }
+    if (error.code === '23503') {
+      return res.status(404).json({ error: 'Session ou membre introuvable.' });
+    }
     res.status(500).json({ error: 'Impossible d’enregistrer la cotisation.' });
   }
 });
@@ -674,21 +686,34 @@ app.get('/api/loans', async (req, res) => {
 
 app.post('/api/loans', async (req, res) => {
   const { user_id, amount, interest_rate, due_date } = req.body;
+  const memberId = Number(user_id);
+  const principal = Number(amount);
+  const interestRate = Number(interest_rate);
+  const validDueDate = typeof due_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(due_date) &&
+    !Number.isNaN(Date.parse(`${due_date}T00:00:00Z`)) &&
+    new Date(`${due_date}T00:00:00Z`).toISOString().slice(0, 10) === due_date;
 
-  if (!user_id || amount === undefined || amount <= 0 || interest_rate === undefined || due_date === undefined) {
+  if (!Number.isInteger(memberId) || memberId <= 0 || !Number.isFinite(principal) || principal <= 0 ||
+      !Number.isFinite(interestRate) || interestRate < 0 || interestRate > 100 || !validDueDate) {
     return res.status(400).json({
-      error: 'Le membre, le montant, le taux d’intérêt et l’échéance sont requis.',
+      error: 'Vérifiez le membre, le montant positif, le taux entre 0 et 100 % et la date d’échéance.',
     });
   }
 
   try {
-    const interest = Number((Number(amount) * Number(interest_rate) / 100).toFixed(2));
-    const totalAmount = Number((Number(amount) + interest).toFixed(2));
+    const member = await pool.query("SELECT id FROM users WHERE id = $1 AND role = 'member'", [memberId]);
+    if (member.rows.length === 0) {
+      return res.status(404).json({ error: 'Membre introuvable.' });
+    }
+
+    const normalizedPrincipal = Number(principal.toFixed(2));
+    const interest = Number((normalizedPrincipal * interestRate / 100).toFixed(2));
+    const totalAmount = Number((normalizedPrincipal + interest).toFixed(2));
     const result = await pool.query(`
       INSERT INTO loans (user_id, amount, interest_rate, due_date, interest, total_amount)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
-    `, [user_id, amount, interest_rate, due_date, interest, totalAmount]);
+    `, [memberId, normalizedPrincipal, interestRate, due_date, interest, totalAmount]);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {

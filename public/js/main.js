@@ -815,7 +815,7 @@ function loadLoanMembers() {
     fetch('/api/members')
         .then(response => response.json())
         .then(members => {
-            members.forEach(member => {
+            members.filter(member => member.role === 'member').forEach(member => {
                 const option = document.createElement('option');
                 option.value = member.id;
                 option.textContent = member.full_name;
