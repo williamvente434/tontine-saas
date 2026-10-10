@@ -94,11 +94,38 @@
                 </figure>
             </section>
 
-            <aside class="card stats-card" aria-label="Informations principales" data-section-view="home">
-                <h3>État du projet</h3>
-                <div class="stat-value">SaaS</div>
-                <p class="stat-note">Node.js, Express et PostgreSQL</p>
-            </aside>
+            <section class="overview-metrics" aria-label="Indicateurs de la tontine" data-section-view="home">
+                <article class="metric-card">
+                    <span class="metric-label">Membres enregistrés</span>
+                    <strong id="overview-members" class="metric-value">—</strong>
+                </article>
+                <article class="metric-card">
+                    <span class="metric-label">Cotisations versées</span>
+                    <strong id="overview-contributions" class="metric-value">—</strong>
+                </article>
+                <article class="metric-card">
+                    <span class="metric-label">Paiements confirmés</span>
+                    <strong id="overview-payments" class="metric-value">—</strong>
+                </article>
+                <article class="metric-card">
+                    <span class="metric-label">Prêts à rembourser</span>
+                    <strong id="overview-loans" class="metric-value">—</strong>
+                </article>
+                <article class="metric-card metric-card-compact">
+                    <span class="metric-label">Réunions à venir</span>
+                    <strong id="overview-sessions" class="metric-value">—</strong>
+                </article>
+            </section>
+
+            <section class="card recent-activity" aria-labelledby="recent-activity-heading" data-section-view="home">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="recent-activity-heading">Activité récente</h2>
+                        <p>Dernières cotisations, transactions et demandes de prêt.</p>
+                    </div>
+                </div>
+                <div id="recent-activity-list" class="activity-list" aria-live="polite"></div>
+            </section>
 
             <section class="card form-section" aria-labelledby="member-heading" data-section-view="members" hidden>
                 <div class="section-heading">

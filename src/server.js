@@ -265,6 +265,57 @@ app.get('/api/members', async (req, res) => {
 
 app.use('/api', requireAdmin);
 
+app.get('/api/admin/overview', async (req, res) => {
+  try {
+    const [members, sessions, contributions, payments, loans, activity] = await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS total FROM users WHERE role = 'member'"),
+      pool.query("SELECT COUNT(*)::int AS total FROM sessions WHERE status = 'scheduled' AND date >= CURRENT_TIMESTAMP"),
+      pool.query("SELECT COALESCE(SUM(amount), 0) AS total FROM contributions WHERE status = 'paid'"),
+      pool.query("SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'paid'"),
+      pool.query(`
+        SELECT COALESCE(SUM(GREATEST(l.total_amount - COALESCE(repayments.paid_amount, 0), 0)), 0) AS total
+        FROM loans l
+        LEFT JOIN (
+          SELECT loan_id, SUM(amount) AS paid_amount
+          FROM loan_repayments
+          GROUP BY loan_id
+        ) repayments ON repayments.loan_id = l.id
+        WHERE l.status <> 'paid'
+      `),
+      pool.query(`
+        SELECT * FROM (
+          SELECT c.created_at AS occurred_at, 'Cotisation' AS category,
+                 u.full_name || ' · ' || c.status AS description, c.amount, c.status
+          FROM contributions c JOIN users u ON u.id = c.user_id
+          UNION ALL
+          SELECT p.created_at AS occurred_at, 'Paiement' AS category,
+                 u.full_name || ' · ' || p.method AS description, p.amount, p.status
+          FROM payments p JOIN users u ON u.id = p.user_id
+          UNION ALL
+          SELECT l.created_at AS occurred_at, 'Prêt' AS category,
+                 u.full_name || ' · échéance ' || l.due_date::text AS description,
+                 l.amount, l.status
+          FROM loans l JOIN users u ON u.id = l.user_id
+        ) recent_activity
+        ORDER BY occurred_at DESC
+        LIMIT 8
+      `),
+    ]);
+
+    res.json({
+      members: members.rows[0].total,
+      upcomingSessions: sessions.rows[0].total,
+      paidContributions: contributions.rows[0].total,
+      confirmedPayments: payments.rows[0].total,
+      outstandingLoans: loans.rows[0].total,
+      recentActivity: activity.rows,
+    });
+  } catch (error) {
+    console.error('Erreur SQL (GET /api/admin/overview) :', error.message);
+    res.status(500).json({ error: 'Impossible de charger les indicateurs du tableau de bord.' });
+  }
+});
+
 // Création d'un membre après validation des champs obligatoires.
 app.post('/api/members', async (req, res) => {
   const { full_name, phone_number, password, role } = req.body;

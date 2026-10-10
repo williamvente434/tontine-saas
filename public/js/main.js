@@ -61,6 +61,63 @@ function setActiveModuleView(view) {
             button.removeAttribute('aria-current');
         }
     });
+
+    if (view === 'home') loadAdminOverview();
+}
+
+async function loadAdminOverview() {
+    try {
+        const overview = await getJson('/api/admin/overview');
+        document.getElementById('overview-members').textContent = overview.members;
+        document.getElementById('overview-contributions').textContent = formatAmount(overview.paidContributions);
+        document.getElementById('overview-payments').textContent = formatAmount(overview.confirmedPayments);
+        document.getElementById('overview-loans').textContent = formatAmount(overview.outstandingLoans);
+        document.getElementById('overview-sessions').textContent = overview.upcomingSessions;
+        renderRecentActivity(overview.recentActivity);
+    } catch (error) {
+        console.error('Erreur de chargement des indicateurs :', error);
+        document.getElementById('recent-activity-list').textContent = 'Impossible de charger les indicateurs.';
+    }
+}
+
+function renderRecentActivity(records) {
+    const list = document.getElementById('recent-activity-list');
+    list.replaceChildren();
+
+    if (records.length === 0) {
+        const emptyState = document.createElement('p');
+        emptyState.className = 'empty-state';
+        emptyState.textContent = 'Aucune activité récente.';
+        list.append(emptyState);
+        return;
+    }
+
+    records.forEach(record => {
+        const item = document.createElement('article');
+        item.className = 'activity-entry';
+
+        const category = document.createElement('span');
+        category.className = 'activity-category';
+        category.textContent = record.category;
+
+        const details = document.createElement('div');
+        details.className = 'activity-details';
+        const description = document.createElement('p');
+        description.className = 'activity-description';
+        description.textContent = record.description;
+        const date = document.createElement('time');
+        date.className = 'activity-date';
+        date.dateTime = record.occurred_at;
+        date.textContent = new Date(record.occurred_at).toLocaleString('fr-CM');
+        details.append(description, date);
+
+        const amount = document.createElement('strong');
+        amount.className = 'activity-amount';
+        amount.textContent = formatAmount(record.amount);
+
+        item.append(category, details, amount);
+        list.append(item);
+    });
 }
 
 function showLoginView() {
@@ -390,7 +447,7 @@ async function loadMembersForContribution() {
 function formatAmount(amount) {
     return new Intl.NumberFormat('fr-CM', {
         style: 'currency',
-        currency: 'FCFA',
+        currency: 'XAF',
         maximumFractionDigits: 2
     }).format(Number(amount));
 }
@@ -644,7 +701,7 @@ async function loadNotifications() {
 function formatLoanAmount(amount) {
     return new Intl.NumberFormat('fr-CM', {
         style: 'currency',
-        currency: 'FCFA',
+        currency: 'XAF',
         maximumFractionDigits: 2
     }).format(Number(amount));
 }
