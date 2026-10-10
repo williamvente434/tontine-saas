@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const { user } = await getJson('/api/auth/me');
-        showAuthenticatedView(user);
+        await showAuthenticatedView(user);
     } catch (error) {
         showLoginView();
     }
@@ -13,6 +13,10 @@ document.getElementById('login-form').addEventListener('submit', async event => 
     const message = document.getElementById('login-message');
     const submitButton = loginForm.querySelector('button[type="submit"]');
     submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
+    submitButton.querySelector('.button-spinner').hidden = false;
+    document.getElementById('login-button-label').textContent = 'Connexion…';
+    message.className = 'form-message';
     message.textContent = 'Connexion en cours…';
 
     try {
@@ -32,6 +36,9 @@ document.getElementById('login-form').addEventListener('submit', async event => 
         message.className = 'form-message error-message';
     } finally {
         submitButton.disabled = false;
+        submitButton.setAttribute('aria-busy', 'false');
+        submitButton.querySelector('.button-spinner').hidden = true;
+        document.getElementById('login-button-label').textContent = 'Se connecter';
     }
 });
 
@@ -103,9 +110,29 @@ document.getElementById('tontine-member-form').addEventListener('submit', async 
     }
 });
 
-function setActiveModuleView(view) {
+let moduleNavigationToken = 0;
+
+async function setActiveModuleView(view) {
+    const navigationToken = ++moduleNavigationToken;
+    const loadingScreen = document.getElementById('module-loading');
+    const loadingLabel = document.getElementById('module-loading-label');
+    const labels = {
+        home: 'Actualisation du tableau de bord…',
+        members: 'Ouverture des membres…',
+        tontines: 'Ouverture des tontines…',
+        sessions: 'Ouverture des réunions…',
+        contributions: 'Ouverture des cotisations…',
+        loans: 'Ouverture des prêts…',
+        payments: 'Ouverture des paiements…',
+        notifications: 'Ouverture des notifications…',
+        reports: 'Préparation des rapports…',
+    };
+
+    loadingLabel.textContent = labels[view] || 'Ouverture de la rubrique…';
+    loadingScreen.hidden = false;
     document.querySelectorAll('[data-section-view]').forEach(section => {
-        section.hidden = section.dataset.sectionView !== view;
+        section.hidden = true;
+        section.inert = true;
     });
 
     document.querySelectorAll('.module-nav-item').forEach(button => {
@@ -116,8 +143,20 @@ function setActiveModuleView(view) {
         }
     });
 
-    if (view === 'home') loadAdminOverview();
-    if (view === 'reports') loadReportRows();
+    const dataLoad = view === 'home'
+        ? loadAdminOverview()
+        : view === 'reports'
+            ? loadReportRows()
+            : Promise.resolve();
+    await Promise.all([dataLoad, new Promise(resolve => window.setTimeout(resolve, 220))]);
+    if (navigationToken !== moduleNavigationToken) return;
+
+    document.querySelectorAll('[data-section-view]').forEach(section => {
+        const isActive = section.dataset.sectionView === view;
+        section.hidden = !isActive;
+        section.inert = !isActive;
+    });
+    loadingScreen.hidden = true;
 }
 
 let currentReportRows = [];
@@ -264,6 +303,7 @@ function renderRecentActivity(records) {
 }
 
 function showLoginView() {
+    document.getElementById('startup-loading').hidden = true;
     document.getElementById('auth-screen').hidden = false;
     document.getElementById('member-space').hidden = true;
     document.getElementById('admin-dashboard').hidden = true;
@@ -272,19 +312,22 @@ function showLoginView() {
 
 async function showAuthenticatedView(user) {
     document.getElementById('auth-screen').hidden = true;
+    document.getElementById('startup-loading').hidden = true;
     document.getElementById('account-actions').hidden = false;
     document.getElementById('account-name').textContent = `${user.full_name} · ${user.role === 'admin' ? 'Administrateur' : 'Membre'}`;
 
     if (user.role === 'admin') {
         document.getElementById('member-space').hidden = true;
         document.getElementById('admin-dashboard').hidden = false;
-        setActiveModuleView('home');
+        await setActiveModuleView('home');
         await loadAdminDashboard();
         return;
     }
 
     document.getElementById('admin-dashboard').hidden = true;
     document.getElementById('member-space').hidden = false;
+    document.getElementById('member-loading').hidden = false;
+    document.getElementById('member-overview-grid').hidden = true;
     await loadMemberOverview();
 }
 
@@ -315,6 +358,12 @@ async function loadMemberOverview() {
     try {
         const overview = await getJson('/api/me/overview');
         document.getElementById('member-space-heading').textContent = `Bonjour ${overview.user.full_name}`;
+        document.getElementById('member-tontine-count').textContent = overview.tontines.length;
+        document.getElementById('member-session-count').textContent = overview.upcomingSessions.length;
+        const paidContributions = overview.contributions
+            .filter(contribution => contribution.status === 'paid')
+            .reduce((total, contribution) => total + Number(contribution.amount), 0);
+        document.getElementById('member-contribution-total').textContent = formatAmount(paidContributions);
         renderPersonalList('my-tontines', overview.tontines, tontine =>
             `${formatAmount(tontine.amount)} · ${formatFrequency(tontine.frequency)} · depuis le ${new Date(tontine.joined_at).toLocaleDateString('fr-CM')}`);
         renderPersonalList('my-upcoming-sessions', overview.upcomingSessions, session =>
@@ -327,8 +376,13 @@ async function loadMemberOverview() {
             `${formatAmount(payment.amount)} · ${payment.status} · ${payment.session_title || payment.method}`);
         renderPersonalList('my-notifications', overview.notifications, notification =>
             `${notification.title} · ${notification.message}`);
+        document.getElementById('member-loading').hidden = true;
+        document.getElementById('member-overview-grid').hidden = false;
     } catch (error) {
         console.error('Erreur de chargement de l’espace membre :', error);
+        document.getElementById('member-loading').hidden = true;
+        document.getElementById('member-overview-grid').hidden = false;
+        document.getElementById('my-tontines').textContent = 'Impossible de charger vos données pour le moment.';
     }
 }
 

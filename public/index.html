@@ -19,17 +19,27 @@
             </div>
         </header>
 
+        <section id="startup-loading" class="startup-loading" role="status" aria-live="polite">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Préparation de votre espace…</span>
+        </section>
+
         <section id="auth-screen" class="auth-screen" aria-labelledby="auth-heading" hidden>
             <div class="auth-copy">
-                <p class="eyebrow">Votre communauté, en confiance</p>
-                <h2 id="auth-heading">Connexion à votre tontine</h2>
-                <p>Accédez à votre espace avec le numéro de téléphone associé à votre compte.</p>
+                <p class="eyebrow">Épargne collective · confiance partagée</p>
+                <h2 id="auth-heading">Chaque tour fait grandir la communauté.</h2>
+                <p>Retrouvez votre groupe, vos cotisations et les prochaines réunions de votre tontine.</p>
                 <figure class="auth-image">
-                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des membres réunis pour organiser leur tontine" loading="eager">
-                    <figcaption>Une communauté qui avance ensemble.</figcaption>
+                    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des proches réunis autour d’un moment partagé" loading="eager">
+                    <figcaption>Une tontine, c’est avancer ensemble.</figcaption>
                 </figure>
             </div>
             <form id="login-form" class="auth-form">
+                <div class="auth-form-heading">
+                    <span class="auth-kicker">Espace sécurisé</span>
+                    <h3>Connexion</h3>
+                    <p>Utilisez les identifiants de votre compte.</p>
+                </div>
                 <div class="form-field">
                     <label for="login-phone">Téléphone</label>
                     <input id="login-phone" name="phone_number" type="tel" autocomplete="username" required>
@@ -38,18 +48,44 @@
                     <label for="login-password">Mot de passe</label>
                     <input id="login-password" name="password" type="password" autocomplete="current-password" required>
                 </div>
-                <button class="primary-button" type="submit">Se connecter</button>
+                <button id="login-button" class="primary-button" type="submit" aria-busy="false">
+                    <span class="loading-spinner button-spinner" aria-hidden="true" hidden></span>
+                    <span id="login-button-label">Se connecter</span>
+                </button>
                 <p id="login-message" class="form-message" aria-live="polite"></p>
             </form>
         </section>
 
         <section id="member-space" class="member-space" aria-labelledby="member-space-heading" hidden>
             <div class="member-welcome">
-                <p class="eyebrow">Espace membre</p>
-                <h2 id="member-space-heading"></h2>
-                <p>Vos tontines, prochaines réunions et opérations personnelles.</p>
+                <div class="member-welcome-copy">
+                    <p class="eyebrow">Votre espace tontine</p>
+                    <h2 id="member-space-heading"></h2>
+                    <p>Vos groupes, les dates importantes et le suivi de votre épargne.</p>
+                </div>
+                <figure class="member-image">
+                    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Des membres profitent d’un moment ensemble" loading="lazy">
+                </figure>
             </div>
-            <div class="member-overview-grid">
+            <div class="member-summary" aria-label="Résumé de votre activité">
+                <article class="member-summary-item">
+                    <span>Mes tontines</span>
+                    <strong id="member-tontine-count">—</strong>
+                </article>
+                <article class="member-summary-item">
+                    <span>Réunions à venir</span>
+                    <strong id="member-session-count">—</strong>
+                </article>
+                <article class="member-summary-item">
+                    <span>Cotisations enregistrées</span>
+                    <strong id="member-contribution-total">—</strong>
+                </article>
+            </div>
+            <div id="member-loading" class="data-loading" role="status" aria-live="polite" hidden>
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span>Chargement de votre espace…</span>
+            </div>
+            <div id="member-overview-grid" class="member-overview-grid" hidden>
                 <section class="card data-section" aria-labelledby="my-tontines-heading">
                     <h3 id="my-tontines-heading">Mes tontines</h3>
                     <div id="my-tontines" class="data-list" aria-live="polite"></div>
@@ -90,6 +126,11 @@
                 <button class="module-nav-item" type="button" data-view="reports">Rapports</button>
             </nav>
 
+            <div id="module-loading" class="data-loading module-loading" role="status" aria-live="polite" hidden>
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span id="module-loading-label">Ouverture de la rubrique…</span>
+            </div>
+
             <section class="card hero-card" data-section-view="home">
                 <p class="eyebrow">Le cœur de votre communauté</p>
                 <h2>Les projets avancent mieux quand la communauté avance ensemble.</h2>
@@ -99,7 +140,7 @@
                     <p id="status" class="connection-result" role="status" aria-live="polite"></p>
                 </div>
                 <figure class="hero-image">
-                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des membres réunis autour d’une table pour échanger" loading="eager">
+                    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Des proches réunis autour d’un moment partagé" loading="eager">
                     <figcaption>Ensemble, chaque contribution compte.</figcaption>
                 </figure>
             </section>
