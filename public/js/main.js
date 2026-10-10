@@ -9,8 +9,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.getElementById('login-form').addEventListener('submit', async event => {
     event.preventDefault();
+    const loginForm = event.currentTarget;
     const message = document.getElementById('login-message');
-    const submitButton = event.currentTarget.querySelector('button[type="submit"]');
+    const submitButton = loginForm.querySelector('button[type="submit"]');
     submitButton.disabled = true;
     message.textContent = 'Connexion en cours…';
 
@@ -23,7 +24,7 @@ document.getElementById('login-form').addEventListener('submit', async event => 
                 password: document.getElementById('login-password').value,
             }),
         });
-        event.currentTarget.reset();
+        loginForm.reset();
         message.textContent = '';
         await showAuthenticatedView(user);
     } catch (error) {
