@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestion des membres, sessions et cotisations de tontines au Cameroun">
+    <title>Tontine SaaS — Cameroun</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">T</div>
+                <div>
+                    <h1>Tontine SaaS</h1>
+                    <p>Gestion sociale et financière au Cameroun</p>
+                </div>
+            </div>
+            <div id="connection-status" class="connection-status" role="status">
+                <span class="connection-dot" aria-hidden="true"></span>
+                <span id="status">Vérification de la connexion...</span>
+            </div>
+            <div id="account-actions" class="account-actions" hidden>
+                <span id="account-name"></span>
+                <button id="logout-button" class="secondary-button" type="button">Se déconnecter</button>
+            </div>
+        </header>
+
+        <section id="auth-screen" class="auth-screen" aria-labelledby="auth-heading" hidden>
+            <div class="auth-copy">
+                <p class="eyebrow">Votre communauté, en confiance</p>
+                <h2 id="auth-heading">Connexion à votre tontine</h2>
+                <p>Accédez à votre espace avec le numéro de téléphone associé à votre compte.</p>
+            </div>
+            <form id="login-form" class="auth-form">
+                <div class="form-field">
+                    <label for="login-phone">Téléphone</label>
+                    <input id="login-phone" name="phone_number" type="tel" autocomplete="username" required>
+                </div>
+                <div class="form-field">
+                    <label for="login-password">Mot de passe</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="primary-button" type="submit">Se connecter</button>
+                <p id="login-message" class="form-message" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section id="member-space" class="member-space" aria-labelledby="member-space-heading" hidden>
+            <div class="member-welcome">
+                <p class="eyebrow">Espace membre</p>
+                <h2 id="member-space-heading"></h2>
+                <p>Retrouvez vos cotisations, prêts, paiements et notifications.</p>
+            </div>
+            <div class="member-overview-grid">
+                <section class="card data-section" aria-labelledby="my-contributions-heading">
+                    <h3 id="my-contributions-heading">Mes cotisations</h3>
+                    <div id="my-contributions" class="data-list" aria-live="polite"></div>
+                </section>
+                <section class="card data-section" aria-labelledby="my-loans-heading">
+                    <h3 id="my-loans-heading">Mes prêts</h3>
+                    <div id="my-loans" class="data-list" aria-live="polite"></div>
+                </section>
+                <section class="card data-section" aria-labelledby="my-payments-heading">
+                    <h3 id="my-payments-heading">Mes paiements</h3>
+                    <div id="my-payments" class="data-list" aria-live="polite"></div>
+                </section>
+                <section class="card data-section" aria-labelledby="my-notifications-heading">
+                    <h3 id="my-notifications-heading">Mes notifications</h3>
+                    <div id="my-notifications" class="data-list" aria-live="polite"></div>
+                </section>
+            </div>
+        </section>
+
+        <div id="admin-dashboard" class="dashboard-grid" hidden>
+            <section class="card hero-card">
+                <p class="eyebrow">Le cœur de votre communauté</p>
+                <h2>Suivez les réunions, les cotisations et les membres de votre tontine.</h2>
+                <p>Centralisez les données de chaque session, validez les contributions et maintenez une visibilité claire sur votre communauté.</p>
+                <div class="hero-action">
+                    <button id="btn-test" class="secondary-button" type="button">Tester l’API PostgreSQL</button>
+                </div>
+            </section>
+
+            <aside class="card stats-card" aria-label="Informations principales">
+                <h3>État du projet</h3>
+                <div class="stat-value">SaaS</div>
+                <p class="stat-note">Node.js, Express et PostgreSQL</p>
+            </aside>
+
+            <section class="card form-section" aria-labelledby="member-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="member-heading">Nouveau membre</h2>
+                        <p>Ajoutez un membre à votre communauté.</p>
+                    </div>
+                </div>
+                <form id="member-form" class="form-grid">
+                    <div class="form-field full-width">
+                        <label for="full_name">Nom complet</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Ex. Jean Paul" required maxlength="100">
+                    </div>
+                    <div class="form-field">
+                        <label for="phone_number">Téléphone</label>
+                        <input type="tel" id="phone_number" name="phone_number" placeholder="Ex. +237690000000" required maxlength="30">
+                    </div>
+                    <div class="form-field">
+                        <label for="member-password">Mot de passe initial</label>
+                        <input type="password" id="member-password" name="password" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="form-field">
+                        <label for="role">Rôle</label>
+                        <select id="role" name="role">
+                            <option value="member">Membre</option>
+                            <option value="admin">Administrateur</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Ajouter le membre</button>
+                    </div>
+                </form>
+                <p id="form-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card data-section" aria-labelledby="members-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="members-heading">Liste des membres</h2>
+                        <p>Les membres enregistrés dans la base.</p>
+                    </div>
+                </div>
+                <ul id="members-list" class="data-list" aria-live="polite">
+                    <li class="empty-state">Chargement des membres...</li>
+                </ul>
+            </section>
+
+            <section class="card form-section" aria-labelledby="session-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="session-heading">Sessions de réunion</h2>
+                        <p>Planifiez une réunion et définition son ordre du jour.</p>
+                    </div>
+                </div>
+                <form id="session-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="session-tontine">Tontine</label>
+                        <select id="session-tontine" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="session-title">Titre de la session</label>
+                        <input type="text" id="session-title" required maxlength="150">
+                    </div>
+                    <div class="form-field">
+                        <label for="session-date">Date de la réunion</label>
+                        <input type="datetime-local" id="session-date" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="session-status">Statut</label>
+                        <select id="session-status">
+                            <option value="scheduled">Prévue</option>
+                            <option value="ongoing">En cours</option>
+                            <option value="completed">Clôturée</option>
+                            <option value="cancelled">Annulée</option>
+                        </select>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="session-agenda">Ordre du jour</label>
+                        <textarea id="session-agenda" rows="3" placeholder="Ex. Répartition des rôles et consultation des cotisations"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Créer la session</button>
+                    </div>
+                </form>
+                <p id="session-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card form-section" aria-labelledby="contribution-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="contribution-heading">Cotisations</h2>
+                        <p>Enregistrez une contribution pour un membre.</p>
+                    </div>
+                </div>
+                <form id="contribution-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="contribution-session">Session</label>
+                        <select id="contribution-session" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="contribution-member">Membre</label>
+                        <select id="contribution-member" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="contribution-amount">Montant en FCFA</label>
+                        <input type="number" id="contribution-amount" min="1" step="1" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="contribution-status">Statut</label>
+                        <select id="contribution-status">
+                            <option value="pending">En attente</option>
+                            <option value="paid">Payé</option>
+                            <option value="overdue">En retard</option>
+                            <option value="failed">Échec</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Enregistrer la cotisation</button>
+                    </div>
+                </form>
+                <p id="contribution-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card data-section" aria-labelledby="contributions-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="contributions-heading">Historique des cotisations</h2>
+                        <p>Consultez les contributions enregistrées pour la session sélectionnée.</p>
+                    </div>
+                </div>
+                <div id="contributions-list" class="data-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card form-section" aria-labelledby="loan-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="loan-heading">Demander un prêt</h2>
+                        <p>Indiquez le membre, le montant, le taux et l’échéance.</p>
+                    </div>
+                </div>
+                <form id="loan-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="loan-member">Membre</label>
+                        <select id="loan-member" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="loan-amount">Montant principal en FCFA</label>
+                        <input type="number" id="loan-amount" min="1" step="1" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="loan-interest-rate">Taux d’intérêt (%)</label>
+                        <input type="number" id="loan-interest-rate" min="0" max="100" step="0.01" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="loan-due-date">Échéance</label>
+                        <input type="date" id="loan-due-date" required>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Demander le prêt</button>
+                    </div>
+                </form>
+                <p id="loan-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card data-section" aria-labelledby="loans-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="loans-heading">Prêts et remboursements</h2>
+                        <p>Suivez le montant total, l’intérêt et la dette restante.</p>
+                    </div>
+                </div>
+                <div id="loans-list" class="data-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card form-section" aria-labelledby="payment-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="payment-heading">Paiement mobile</h2>
+                        <p>Enregistrez un paiement pour un membre ou une session.</p>
+                    </div>
+                </div>
+                <form id="payment-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="payment-member">Membre</label>
+                        <select id="payment-member" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="payment-session">Session</label>
+                        <select id="payment-session"></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="payment-amount">Montant en FCFA</label>
+                        <input type="number" id="payment-amount" min="1" step="1" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="payment-method">Méthode</label>
+                        <select id="payment-method">
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="bank_transfer">Virement</option>
+                            <option value="cash">Espèces</option>
+                        </select>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="payment-reference">Référence</label>
+                        <input type="text" id="payment-reference" placeholder="Ex. MOMO-123456">
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Valider le paiement</button>
+                    </div>
+                </form>
+                <p id="payment-message" class="form-message" aria-live="polite"></p>
+            </section>
+
+            <section class="card data-section" aria-labelledby="payments-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="payments-heading">Historique des paiements</h2>
+                        <p>Consultez les paiements enregistrés pour les membres et les sessions.</p>
+                    </div>
+                </div>
+                <div id="payments-list" class="data-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card data-section" aria-labelledby="notifications-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="notifications-heading">Notifications</h2>
+                        <p>Suivez les actions importantes de votre tontine.</p>
+                    </div>
+                </div>
+                <div id="notifications-list" class="data-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card data-section" aria-labelledby="sessions-heading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="sessions-heading">Sessions enregistrées</h2>
+                        <p>Mesurez le déroulement des réunions.</p>
+                    </div>
+                </div>
+                <div id="sessions-list" class="data-list" aria-live="polite"></div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

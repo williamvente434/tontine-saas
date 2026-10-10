@@ -1,0 +1,89 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(30) NOT NULL,
+    role VARCHAR(20) DEFAULT 'member',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tontines (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    frequency VARCHAR(20) DEFAULT 'monthly',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tontine_members (
+    id SERIAL PRIMARY KEY,
+    tontine_id INT REFERENCES tontines(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tontine_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id SERIAL PRIMARY KEY,
+    tontine_id INT NOT NULL REFERENCES tontines(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    date TIMESTAMP NOT NULL,
+    agenda TEXT,
+    status VARCHAR(20) DEFAULT 'scheduled',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS contributions (
+    id SERIAL PRIMARY KEY,
+    session_id INT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    paid_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(session_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS loans (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount DECIMAL(12, 2) NOT NULL,
+    interest_rate DECIMAL(5, 2) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    principal DECIMAL(12, 2) NOT NULL DEFAULT 0,
+    interest DECIMAL(12, 2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(12, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS loan_repayments (
+    id SERIAL PRIMARY KEY,
+    loan_id INT NOT NULL REFERENCES loans(id) ON DELETE CASCADE,
+    amount DECIMAL(12, 2) NOT NULL,
+    paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id INT REFERENCES sessions(id) ON DELETE SET NULL,
+    amount DECIMAL(12, 2) NOT NULL,
+    method VARCHAR(20) DEFAULT 'mobile_money',
+    reference VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'pending',
+    paid_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(30) DEFAULT 'info',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
