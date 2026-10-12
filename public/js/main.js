@@ -64,8 +64,10 @@ document.getElementById('report-filter-form').addEventListener('submit', async e
 
 document.getElementById('member-search')?.addEventListener('input', () => loadMembers());
 document.getElementById('member-role-filter')?.addEventListener('change', () => loadMembers());
+document.getElementById('member-sort')?.addEventListener('change', () => loadMembers());
 document.getElementById('notification-search')?.addEventListener('input', () => loadNotifications());
 document.getElementById('notification-type-filter')?.addEventListener('change', () => loadNotifications());
+document.getElementById('notification-sort')?.addEventListener('change', () => loadNotifications());
 
 document.getElementById('report-export-button').addEventListener('click', exportReportCsv);
 
@@ -503,10 +505,15 @@ async function loadMembers() {
 
         const searchValue = (document.getElementById('member-search')?.value || '').trim().toLowerCase();
         const roleFilter = document.getElementById('member-role-filter')?.value || 'all';
+        const sortMode = document.getElementById('member-sort')?.value || 'name-asc';
         const filteredMembers = members.filter(member => {
             const matchesSearch = !searchValue || `${member.full_name} ${member.phone_number} ${member.role}`.toLowerCase().includes(searchValue);
             const matchesRole = roleFilter === 'all' || member.role === roleFilter;
             return matchesSearch && matchesRole;
+        }).sort((a, b) => {
+            if (sortMode === 'name-desc') return b.full_name.localeCompare(a.full_name);
+            if (sortMode === 'role') return a.role.localeCompare(b.role) || a.full_name.localeCompare(b.full_name);
+            return a.full_name.localeCompare(b.full_name);
         });
 
         listEl.replaceChildren();
@@ -941,10 +948,15 @@ async function loadNotifications() {
         const notifications = await getJson('/api/notifications');
         const searchValue = (document.getElementById('notification-search')?.value || '').trim().toLowerCase();
         const typeFilter = document.getElementById('notification-type-filter')?.value || 'all';
+        const sortMode = document.getElementById('notification-sort')?.value || 'recent';
         const filteredNotifications = notifications.filter(notification => {
             const matchesSearch = !searchValue || `${notification.title} ${notification.message} ${notification.type}`.toLowerCase().includes(searchValue);
             const matchesType = typeFilter === 'all' || notification.type === typeFilter;
             return matchesSearch && matchesType;
+        }).sort((a, b) => {
+            if (sortMode === 'older') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortMode === 'title') return a.title.localeCompare(b.title);
+            return new Date(b.created_at) - new Date(a.created_at);
         });
 
         if (filteredNotifications.length === 0) {

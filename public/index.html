@@ -232,6 +232,14 @@
                             <option value="member">Membres</option>
                         </select>
                     </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="member-sort" class="sr-only">Trier les membres</label>
+                        <select id="member-sort" aria-label="Trier les membres">
+                            <option value="name-asc">Nom A–Z</option>
+                            <option value="name-desc">Nom Z–A</option>
+                            <option value="role">Rôle</option>
+                        </select>
+                    </div>
                 </div>
                 <ul id="members-list" class="data-list" aria-live="polite">
                     <li class="empty-state">Chargement des membres...</li>
@@ -499,6 +507,14 @@
                             <option value="contribution">Cotisations</option>
                             <option value="loan">Prêts</option>
                             <option value="info">Informations</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="notification-sort" class="sr-only">Trier les notifications</label>
+                        <select id="notification-sort" aria-label="Trier les notifications">
+                            <option value="recent">Plus récentes</option>
+                            <option value="older">Plus anciennes</option>
+                            <option value="title">Titre</option>
                         </select>
                     </div>
                 </div>
