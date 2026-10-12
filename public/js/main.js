@@ -62,6 +62,9 @@ document.getElementById('report-filter-form').addEventListener('submit', async e
     await loadReportRows();
 });
 
+document.getElementById('member-search')?.addEventListener('input', () => loadMembers());
+document.getElementById('notification-search')?.addEventListener('input', () => loadNotifications());
+
 document.getElementById('report-export-button').addEventListener('click', exportReportCsv);
 
 document.getElementById('tontine-form').addEventListener('submit', async event => {
@@ -496,9 +499,25 @@ async function loadMembers() {
             return;
         }
 
+        const filterValue = (document.getElementById('member-search')?.value || '').trim().toLowerCase();
+        const filteredMembers = filterValue
+            ? members.filter(member => {
+                const text = `${member.full_name} ${member.phone_number} ${member.role}`.toLowerCase();
+                return text.includes(filterValue);
+            })
+            : members;
+
         listEl.replaceChildren();
 
-        members.forEach(member => {
+        if (filteredMembers.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'empty-state';
+            empty.textContent = 'Aucun membre ne correspond à la recherche.';
+            listEl.append(empty);
+            return;
+        }
+
+        filteredMembers.forEach(member => {
             const item = document.createElement('li');
             item.className = 'member-item';
 
@@ -837,7 +856,7 @@ function loadPaymentMembers() {
     fetch('/api/members')
         .then(response => response.json())
         .then(members => {
-            members.forEach(member => {
+            members.filter(member => member.role === 'member').forEach(member => {
                 const option = document.createElement('option');
                 option.value = member.id;
                 option.textContent = member.full_name;
@@ -918,15 +937,23 @@ async function loadNotifications() {
     list.replaceChildren();
     try {
         const notifications = await getJson('/api/notifications');
-        if (notifications.length === 0) {
+        const filterValue = (document.getElementById('notification-search')?.value || '').trim().toLowerCase();
+        const filteredNotifications = filterValue
+            ? notifications.filter(notification => {
+                const text = `${notification.title} ${notification.message} ${notification.type}`.toLowerCase();
+                return text.includes(filterValue);
+            })
+            : notifications;
+
+        if (filteredNotifications.length === 0) {
             const emptyState = document.createElement('p');
             emptyState.className = 'empty-state';
-            emptyState.textContent = 'Aucune notification pour le moment.';
+            emptyState.textContent = 'Aucune notification ne correspond à la recherche.';
             list.append(emptyState);
             return;
         }
 
-        notifications.slice(0, 5).forEach(notification => {
+        filteredNotifications.slice(0, 5).forEach(notification => {
             const item = document.createElement('article');
             item.className = 'data-card';
 
