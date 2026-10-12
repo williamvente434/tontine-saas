@@ -219,9 +219,19 @@
                         <p>Les membres enregistrés dans la base.</p>
                     </div>
                 </div>
-                <div class="toolbar-field" style="max-width: 340px; margin-bottom: 14px;">
-                    <label for="member-search" class="sr-only">Rechercher un membre</label>
-                    <input id="member-search" type="search" placeholder="Rechercher par nom ou téléphone" aria-label="Rechercher un membre" />
+                <div class="toolbar-row" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                    <div class="toolbar-field" style="max-width: 340px; flex: 1 1 260px;">
+                        <label for="member-search" class="sr-only">Rechercher un membre</label>
+                        <input id="member-search" type="search" placeholder="Rechercher par nom ou téléphone" aria-label="Rechercher un membre" />
+                    </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="member-role-filter" class="sr-only">Filtrer par rôle</label>
+                        <select id="member-role-filter" aria-label="Filtrer par rôle">
+                            <option value="all">Tous les rôles</option>
+                            <option value="admin">Administrateurs</option>
+                            <option value="member">Membres</option>
+                        </select>
+                    </div>
                 </div>
                 <ul id="members-list" class="data-list" aria-live="polite">
                     <li class="empty-state">Chargement des membres...</li>
@@ -476,9 +486,21 @@
                         <p>Suivez les actions importantes de votre tontine.</p>
                     </div>
                 </div>
-                <div class="toolbar-field" style="max-width: 340px; margin-bottom: 14px;">
-                    <label for="notification-search" class="sr-only">Rechercher une notification</label>
-                    <input id="notification-search" type="search" placeholder="Rechercher une notification" aria-label="Rechercher une notification" />
+                <div class="toolbar-row" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                    <div class="toolbar-field" style="max-width: 340px; flex: 1 1 260px;">
+                        <label for="notification-search" class="sr-only">Rechercher une notification</label>
+                        <input id="notification-search" type="search" placeholder="Rechercher une notification" aria-label="Rechercher une notification" />
+                    </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="notification-type-filter" class="sr-only">Filtrer par type</label>
+                        <select id="notification-type-filter" aria-label="Filtrer par type">
+                            <option value="all">Tous les types</option>
+                            <option value="payment">Paiements</option>
+                            <option value="contribution">Cotisations</option>
+                            <option value="loan">Prêts</option>
+                            <option value="info">Informations</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="notifications-list" class="data-list" aria-live="polite"></div>
             </section>

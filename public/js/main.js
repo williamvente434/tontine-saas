@@ -63,7 +63,9 @@ document.getElementById('report-filter-form').addEventListener('submit', async e
 });
 
 document.getElementById('member-search')?.addEventListener('input', () => loadMembers());
+document.getElementById('member-role-filter')?.addEventListener('change', () => loadMembers());
 document.getElementById('notification-search')?.addEventListener('input', () => loadNotifications());
+document.getElementById('notification-type-filter')?.addEventListener('change', () => loadNotifications());
 
 document.getElementById('report-export-button').addEventListener('click', exportReportCsv);
 
@@ -499,13 +501,13 @@ async function loadMembers() {
             return;
         }
 
-        const filterValue = (document.getElementById('member-search')?.value || '').trim().toLowerCase();
-        const filteredMembers = filterValue
-            ? members.filter(member => {
-                const text = `${member.full_name} ${member.phone_number} ${member.role}`.toLowerCase();
-                return text.includes(filterValue);
-            })
-            : members;
+        const searchValue = (document.getElementById('member-search')?.value || '').trim().toLowerCase();
+        const roleFilter = document.getElementById('member-role-filter')?.value || 'all';
+        const filteredMembers = members.filter(member => {
+            const matchesSearch = !searchValue || `${member.full_name} ${member.phone_number} ${member.role}`.toLowerCase().includes(searchValue);
+            const matchesRole = roleFilter === 'all' || member.role === roleFilter;
+            return matchesSearch && matchesRole;
+        });
 
         listEl.replaceChildren();
 
@@ -937,13 +939,13 @@ async function loadNotifications() {
     list.replaceChildren();
     try {
         const notifications = await getJson('/api/notifications');
-        const filterValue = (document.getElementById('notification-search')?.value || '').trim().toLowerCase();
-        const filteredNotifications = filterValue
-            ? notifications.filter(notification => {
-                const text = `${notification.title} ${notification.message} ${notification.type}`.toLowerCase();
-                return text.includes(filterValue);
-            })
-            : notifications;
+        const searchValue = (document.getElementById('notification-search')?.value || '').trim().toLowerCase();
+        const typeFilter = document.getElementById('notification-type-filter')?.value || 'all';
+        const filteredNotifications = notifications.filter(notification => {
+            const matchesSearch = !searchValue || `${notification.title} ${notification.message} ${notification.type}`.toLowerCase().includes(searchValue);
+            const matchesType = typeFilter === 'all' || notification.type === typeFilter;
+            return matchesSearch && matchesType;
+        });
 
         if (filteredNotifications.length === 0) {
             const emptyState = document.createElement('p');

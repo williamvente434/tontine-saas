@@ -920,6 +920,13 @@ textarea {
     gap: 10px;
 }
 
+.toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
