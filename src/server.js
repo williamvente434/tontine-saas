@@ -14,21 +14,25 @@ const { rateLimit } = require('express-rate-limit');
 // -------------------------------------------------------------------------
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
 
-if (process.env.NODE_ENV === 'production') {
+if (isProduction) {
   app.set('trust proxy', 1);
 }
 
 const pool = new Pool({
   connectionString:
-    process.env.DATABASE_URL ||
-    'postgres://tontine_user:secretpassword@postgres:5432/tontine_db',
+    process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/tontine',
 });
 const PgSessionStore = connectPgSimple(session);
-const sessionSecret = process.env.SESSION_SECRET;
+const sessionSecret = process.env.SESSION_SECRET || 'dev-session-secret-key-32chars-min';
 
-if (!sessionSecret || sessionSecret.length < 32) {
-  throw new Error('SESSION_SECRET doit contenir au moins 32 caractères.');
+if (isProduction && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
+  throw new Error('SESSION_SECRET doit contenir au moins 32 caractères en production.');
+}
+
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET absent : utilisation de la clé de développement par défaut.');
 }
 
 // -------------------------------------------------------------------------
@@ -237,29 +241,36 @@ async function initializeAuthentication() {
     ON users (phone_number) WHERE password_hash IS NOT NULL
   `);
 
-  const { ADMIN_NAME, ADMIN_PHONE, ADMIN_PASSWORD } = process.env;
-  if (!ADMIN_NAME || !ADMIN_PHONE || !ADMIN_PASSWORD || ADMIN_PASSWORD.length < 8) {
-    throw new Error('Définissez ADMIN_NAME, ADMIN_PHONE et ADMIN_PASSWORD (8 caractères minimum).');
+  const adminName = process.env.ADMIN_NAME || 'Admin Tontine';
+  const adminPhone = process.env.ADMIN_PHONE || '+237600000000';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin12345';
+
+  if (isProduction && (!process.env.ADMIN_NAME || !process.env.ADMIN_PHONE || !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD.length < 8)) {
+    throw new Error('Définissez ADMIN_NAME, ADMIN_PHONE et ADMIN_PASSWORD (8 caractères minimum) en production.');
   }
 
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+  if (!process.env.ADMIN_NAME || !process.env.ADMIN_PHONE || !process.env.ADMIN_PASSWORD) {
+    console.warn('Variables ADMIN_* absentes : utilisation des identifiants de développement par défaut.');
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
   const existingAdmin = await pool.query(
     'SELECT id FROM users WHERE phone_number = $1 ORDER BY id DESC LIMIT 1',
-    [ADMIN_PHONE]
+    [adminPhone]
   );
   if (existingAdmin.rows[0]) {
     await pool.query(`
       UPDATE users
       SET full_name = $1, role = 'admin', password_hash = $2
       WHERE id = $3
-    `, [ADMIN_NAME, passwordHash, existingAdmin.rows[0].id]);
+    `, [adminName, passwordHash, existingAdmin.rows[0].id]);
   } else {
     await pool.query(`
       INSERT INTO users (full_name, phone_number, role, password_hash)
       VALUES ($1, $2, 'admin', $3)
-    `, [ADMIN_NAME, ADMIN_PHONE, passwordHash]);
+    `, [adminName, adminPhone, passwordHash]);
   }
-  console.log(`Compte administrateur prêt pour ${ADMIN_PHONE}.`);
+  console.log(`Compte administrateur prêt pour ${adminPhone}.`);
 }
 
 // Récupération des membres enregistrés, du plus récent au plus ancien.

@@ -65,6 +65,9 @@ document.getElementById('report-filter-form').addEventListener('submit', async e
 document.getElementById('member-search')?.addEventListener('input', () => loadMembers());
 document.getElementById('member-role-filter')?.addEventListener('change', () => loadMembers());
 document.getElementById('member-sort')?.addEventListener('change', () => loadMembers());
+document.getElementById('session-search')?.addEventListener('input', () => loadSessions());
+document.getElementById('session-status-filter')?.addEventListener('change', () => loadSessions());
+document.getElementById('session-sort')?.addEventListener('change', () => loadSessions());
 document.getElementById('notification-search')?.addEventListener('input', () => loadNotifications());
 document.getElementById('notification-type-filter')?.addEventListener('change', () => loadNotifications());
 document.getElementById('notification-sort')?.addEventListener('change', () => loadNotifications());
@@ -346,6 +349,7 @@ async function loadAdminDashboard() {
         loadTontines(),
         loadSessions(),
         loadMembersForContribution(),
+        loadNotificationUsers(),
         loadLoans(),
         loadNotifications(),
         loadPayments()
@@ -641,25 +645,39 @@ async function loadSessions() {
         const sessions = await getJson('/api/sessions');
         const list = document.getElementById('sessions-list');
         const select = document.getElementById('contribution-session');
+        const searchValue = (document.getElementById('session-search')?.value || '').trim().toLowerCase();
+        const statusFilter = document.getElementById('session-status-filter')?.value || 'all';
+        const sortMode = document.getElementById('session-sort')?.value || 'recent';
+
+        const filteredSessions = sessions.filter(session => {
+            const matchesSearch = !searchValue || `${session.title} ${session.tontine_name} ${session.status}`.toLowerCase().includes(searchValue);
+            const matchesStatus = statusFilter === 'all' || session.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        }).sort((a, b) => {
+            if (sortMode === 'older') return new Date(a.date) - new Date(b.date);
+            if (sortMode === 'title') return a.title.localeCompare(b.title) || new Date(a.date) - new Date(b.date);
+            return new Date(b.date) - new Date(a.date);
+        });
+
         list.replaceChildren();
 
-        if (sessions.length === 0) {
+        if (filteredSessions.length === 0) {
             const emptyState = document.createElement('p');
             emptyState.className = 'empty-state';
-            emptyState.textContent = 'Aucune session n’a encore été créée.';
+            emptyState.textContent = 'Aucune session ne correspond à la recherche.';
             list.append(emptyState);
-            select.replaceChildren();
+            if (select) select.replaceChildren();
             return;
         }
 
         populateSelect(
             select,
-            sessions,
+            filteredSessions,
             session => `${session.title} - ${session.tontine_name}`,
             'id'
         );
 
-        sessions.forEach(session => {
+        filteredSessions.forEach(session => {
             const item = document.createElement('article');
             item.className = 'data-card';
 
@@ -716,6 +734,16 @@ async function loadMembersForContribution() {
         populateSelect(select, members, 'full_name', 'id');
     } catch (error) {
         console.error('Erreur de chargement des membres :', error);
+    }
+}
+
+async function loadNotificationUsers() {
+    try {
+        const members = await getJson('/api/members');
+        const select = document.getElementById('notification-user');
+        populateSelect(select, members, 'full_name', 'id');
+    } catch (error) {
+        console.error('Erreur de chargement des destinataires :', error);
     }
 }
 
@@ -971,14 +999,24 @@ async function loadNotifications() {
             const item = document.createElement('article');
             item.className = 'data-card';
 
+            const header = document.createElement('div');
+            header.className = 'data-card-header';
+
             const title = document.createElement('h3');
             title.textContent = notification.title;
+
+            const badge = createStatusBadge(notification.type || 'info');
+            header.append(title, badge);
 
             const message = document.createElement('p');
             message.className = 'data-card-description';
             message.textContent = notification.message;
 
-            item.append(title, message);
+            const time = document.createElement('p');
+            time.className = 'data-card-meta';
+            time.textContent = new Date(notification.created_at).toLocaleString('fr-CM');
+
+            item.append(header, message, time);
             list.append(item);
         });
     } catch (error) {
@@ -1127,6 +1165,34 @@ document.getElementById('payment-form').addEventListener('submit', async event =
         message.style.color = 'green';
         document.getElementById('payment-form').reset();
         await loadPayments();
+        await loadNotifications();
+    } catch (error) {
+        message.textContent = `Erreur : ${error.message}`;
+        message.style.color = 'red';
+    }
+});
+
+document.getElementById('notification-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = document.getElementById('notification-message');
+
+    const notificationData = {
+        user_id: Number(document.getElementById('notification-user').value),
+        title: document.getElementById('notification-title').value.trim(),
+        message: document.getElementById('notification-message-input').value.trim(),
+        type: document.getElementById('notification-type').value
+    };
+
+    try {
+        await getJson('/api/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(notificationData)
+        });
+
+        message.textContent = 'Notification envoyée avec succès !';
+        message.style.color = 'green';
+        document.getElementById('notification-form').reset();
         await loadNotifications();
     } catch (error) {
         message.textContent = `Erreur : ${error.message}`;

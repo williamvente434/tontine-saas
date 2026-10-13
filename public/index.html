@@ -487,6 +487,42 @@
                 <div id="payments-list" class="data-list" aria-live="polite"></div>
             </section>
 
+            <section class="card form-section" aria-labelledby="notification-creator-heading" data-section-view="notifications" hidden>
+                <div class="section-heading">
+                    <div>
+                        <h2 id="notification-creator-heading">Envoyer une notification</h2>
+                        <p>Informez un membre ou un groupe sur une action importante.</p>
+                    </div>
+                </div>
+                <form id="notification-form" class="form-grid">
+                    <div class="form-field">
+                        <label for="notification-user">Membre</label>
+                        <select id="notification-user" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="notification-title">Titre</label>
+                        <input id="notification-title" type="text" maxlength="150" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="notification-type">Type</label>
+                        <select id="notification-type">
+                            <option value="info">Information</option>
+                            <option value="payment">Paiement</option>
+                            <option value="contribution">Cotisation</option>
+                            <option value="loan">Prêt</option>
+                        </select>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="notification-message-input">Message</label>
+                        <textarea id="notification-message-input" rows="3" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="primary-button" type="submit">Envoyer la notification</button>
+                    </div>
+                </form>
+                <p id="notification-message" class="form-message" aria-live="polite"></p>
+            </section>
+
             <section class="card data-section" aria-labelledby="notifications-heading" data-section-view="notifications" hidden>
                 <div class="section-heading">
                     <div>
@@ -574,6 +610,30 @@
                     <div>
                         <h2 id="sessions-heading">Sessions enregistrées</h2>
                         <p>Mesurez le déroulement des réunions.</p>
+                    </div>
+                </div>
+                <div class="toolbar-row" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                    <div class="toolbar-field" style="max-width: 340px; flex: 1 1 260px;">
+                        <label for="session-search" class="sr-only">Rechercher une session</label>
+                        <input id="session-search" type="search" placeholder="Rechercher une session" aria-label="Rechercher une session" />
+                    </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="session-status-filter" class="sr-only">Filtrer par statut</label>
+                        <select id="session-status-filter" aria-label="Filtrer par statut">
+                            <option value="all">Tous les statuts</option>
+                            <option value="scheduled">Prévue</option>
+                            <option value="ongoing">En cours</option>
+                            <option value="completed">Clôturée</option>
+                            <option value="cancelled">Annulée</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-field" style="max-width: 220px; flex: 1 1 180px;">
+                        <label for="session-sort" class="sr-only">Trier les sessions</label>
+                        <select id="session-sort" aria-label="Trier les sessions">
+                            <option value="recent">Plus récentes</option>
+                            <option value="older">Plus anciennes</option>
+                            <option value="title">Titre</option>
+                        </select>
                     </div>
                 </div>
                 <div id="sessions-list" class="data-list" aria-live="polite"></div>
